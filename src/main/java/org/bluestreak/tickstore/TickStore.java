@@ -54,12 +54,15 @@ public class TickStore implements EventHandler<Tick>, LifecycleAware {
     public void onEvent(Tick event, long sequence, boolean endOfBatch) throws Exception {
         switch (event.instrument) {
             case -1:
+                // market close message, don't persist
                 latch.countDown();
                 break;
             default:
+                // add timestamp and save
                 event.timestamp = System.currentTimeMillis();
                 writer.append(event);
         }
+        // commit at end of batch
         if (endOfBatch) {
             writer.commit();
         }

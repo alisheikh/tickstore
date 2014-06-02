@@ -45,7 +45,7 @@ import java.util.concurrent.Executors;
  * <p/>
  * The number of markets is limited by number of available CPUs. Running more markets than CPU-2 will slow
  * down this prototype.
- *
+ * <p/>
  * Printing is optional because it wouldn't be human-readable at 200,000,000 ticks, however
  * even if printing is disabled the string to be printed is still formatted.
  * <p/>
@@ -91,11 +91,15 @@ public class MultiMarkerTickPersistenceMain {
         this.messageCount = messageCount;
         this.latch = new CountDownLatch(marketCount);
         this.service = Executors.newCachedThreadPool();
+        // ring buffer with busy spin strategy to avoid CPU context switches.
         this.ringBuffer = RingBuffer.createMultiProducer(Tick.EVENT_FACTORY, BUFFER_SIZE, new BusySpinWaitStrategy());
+        // both consumers run in parallel, so they use the same barrier
         SequenceBarrier barrier = this.ringBuffer.newBarrier();
+        // store consumer
         this.storeProcessor = new BatchEventProcessor<>(this.ringBuffer, barrier, new TickStore(factory, latch));
+        // vwap compute consumer
         this.vwapProcessor = new BatchEventProcessor<>(this.ringBuffer, barrier, new TickAvgPrice(instrumentCount, printPrices));
-        // prevent buffer wrap without messages being handled.
+        // prevent buffer wrap before ticks have being handled.
         this.ringBuffer.addGatingSequences(storeProcessor.getSequence(), vwapProcessor.getSequence());
     }
 
@@ -112,6 +116,19 @@ public class MultiMarkerTickPersistenceMain {
     }
 
     public static void main(String[] args) throws JournalException, InterruptedException {
+        File dir;
+        if (args.length > 0) {
+            dir = new File(args[0]);
+        } else {
+            dir = new File(STORE_DIR);
+        }
+
+        if (!dir.exists()) {
+            System.out.println("ERROR: Directory does not exist: " + dir.getAbsolutePath());
+            System.out.print("\nUsage: " + MultiMarkerTickPersistenceMain.class.getName() + " <storage-directory>\n");
+            System.exit(44);
+        }
+
         MultiMarkerTickPersistenceMain main = new MultiMarkerTickPersistenceMain(new JournalFactory(new JournalConfiguration("/tiq.xml", new File(STORE_DIR)).build())
                 , 100 // instrument count
                 , 2 // market count

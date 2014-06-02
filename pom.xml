@@ -53,31 +53,42 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <descriptor>assembly.xml</descriptor>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.bluestreak.tickstore.MultiMarkerTickPersistenceMain</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
 
         <dependency>
-            <groupId>com.nfsdb</groupId>
-            <artifactId>nfsdb-core</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
+            <groupId>com.lmax</groupId>
+            <artifactId>disruptor</artifactId>
+            <version>3.2.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.nfsdb</groupId>
             <artifactId>nfsdb-core</artifactId>
             <version>1.0.2</version>
-            <type>test-jar</type>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>
