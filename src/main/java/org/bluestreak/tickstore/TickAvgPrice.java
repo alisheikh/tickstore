@@ -18,8 +18,9 @@ package org.bluestreak.tickstore;
 
 
 import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.LifecycleAware;
 
-public class TickAvgPrice implements EventHandler<Tick> {
+public class TickAvgPrice implements EventHandler<Tick>, LifecycleAware {
 
     private final long bidVolume[];
     private final long askVolume[];
@@ -27,6 +28,7 @@ public class TickAvgPrice implements EventHandler<Tick> {
     private final long askPrice[];
     private final StringBuilder builder;
     private final boolean print;
+    private int cursor = 0;
 
     public TickAvgPrice(int instrumentCount, boolean print) {
         this.bidVolume = new long[instrumentCount];
@@ -65,6 +67,17 @@ public class TickAvgPrice implements EventHandler<Tick> {
                 }
                 System.out.println();
             }
+            cursor++;
         }
+    }
+
+    @Override
+    public void onStart() {
+
+    }
+
+    @Override
+    public void onShutdown() {
+        System.out.println("Computed: " + cursor);
     }
 }

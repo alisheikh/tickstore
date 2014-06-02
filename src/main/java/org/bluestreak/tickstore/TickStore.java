@@ -47,6 +47,11 @@ public class TickStore implements EventHandler<Tick>, LifecycleAware {
 
     @Override
     public void onShutdown() {
+        try {
+            System.out.println("Persisted: " + writer.size());
+        } catch (JournalException e) {
+            System.out.println("Corrupt storage");
+        }
         this.writer.close();
     }
 
